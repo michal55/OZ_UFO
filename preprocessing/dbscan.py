@@ -4,10 +4,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from mpl_toolkits.basemap import Basemap
 
 df = pd.read_csv('scrubbed.csv', low_memory = False)
+
+# Remove empty shapes
+df = df.query("(shape == shape)")
 
 # Reduce out dataset to finish fast
 df = df.drop(df.index[range(0, 60000)])
@@ -16,6 +20,7 @@ df = df.drop(df.index[range(0, 60000)])
 df['datetime'] = df['datetime'].apply(lambda x: x.replace('24:00', '23:59'))
 df['datetime'] = pd.to_datetime(df['datetime'], format = '%m/%d/%Y %H:%M')
 
+print(df)
 
 # Set all non parsable values for coordinates to 0 - FIXME
 def hack_floats(num):
@@ -25,7 +30,7 @@ def hack_floats(num):
         return 0.0
 
 df['latitude'] = df['latitude'].map(hack_floats, na_action = 'ignore')
-df['longitude '] = df['longitude '].map(hack_floats, na_action = 'ignore')
+df['longitude'] = df['longitude'].map(hack_floats, na_action = 'ignore')
 
 # Create timestamp feature from datetime
 def to_timestamp(datetime):
@@ -34,7 +39,12 @@ def to_timestamp(datetime):
 df['timestamp'] = df['datetime'].map(to_timestamp, na_action = 'ignore')
 
 # Construct map (background)
-map = Basemap(projection='robin', lat_0=0, lon_0=-100, resolution='l', area_thresh=1000.0)
+# Default 'map' projection
+# map = Basemap(projection='robin', lat_0=0, lon_0=-0, resolution='l', area_thresh=1000.0)
+# Globe - American side
+# map = Basemap(projection='nsper', lat_0=40, lon_0=-105, resolution='l', area_thresh=1000.0)
+# Globe - EU side
+map = Basemap(projection='nsper', lat_0=40, lon_0=-0, resolution='l', area_thresh=1000.0)
 map.drawcoastlines()
 map.drawcountries()
 map.fillcontinents(color='coral')
@@ -53,14 +63,20 @@ map.drawparallels(np.arange(-90, 90, 30))
 
 
 # Reduce dataset to features used for DBSCAN
-df = df[['latitude', 'longitude ', 'timestamp']]
+# df = df[['latitude', 'longitude', 'timestamp']]
+
+df = pd.concat([df[['latitude', 'longitude', 'timestamp']], pd.get_dummies(df['shape'])], axis=1)
+
+# Principal component analysis - dimension reduction - not needed for <100 columns
+# pca = PCA(n_components=5)
+# pca.fit_transform(df)
 
 # Scaling magic
 scaler = StandardScaler().fit(df)
 df = scaler.transform(df)
 
 # DBSCAN
-db = DBSCAN(eps=0.3, min_samples=10).fit(df)
+db = DBSCAN(eps=0.3, min_samples=10, algorithm='auto').fit(df)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_

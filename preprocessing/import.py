@@ -8,6 +8,8 @@ import csv
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import math
+from sklearn.decomposition import PCA
 
 pd.set_option('display.max_columns', 100)
 pd.set_option('display.width', 500)
@@ -23,7 +25,9 @@ print(df.columns)
 # print(df.groupby('state').value_counts())
 # print(df['shape'].value_counts())
 
+count = 0
 def shape_from_comment( row ):
+	global count
 	comment = row['comments']
 	shapes = ['cylinder', 'light', 'circle', 'sphere', 'disk', 'fireball', 'unknown', 'oval',
 	 'other', 'cigar', 'rectangle', 'chevron', 'triangle', 'formation', 'delta',
@@ -31,12 +35,17 @@ def shape_from_comment( row ):
 	 'round', 'crescent', 'flare', 'hexagon', 'dome', 'changed']
 	if isinstance(comment, str):
 		result = (' ').join(set(shapes).intersection(set(comment)))
+		for shape in shapes:
+			if shape in comment:
+				result.join(shape)
 		if len(result) > 1:
 			return result
 		else:
-			print(comment)
+			# print(comment)
 			return np.nan
 	else:
+		count += 1
+		print(comment)
 		return "None"
 
 def first_word( row ):
@@ -46,22 +55,42 @@ def first_word( row ):
 		return "None"
 
 plt.figure()
-shapes = df['shape'].unique()
-print(shapes)
+# shapes = df['shape'].unique()
+# print(shapes)	
 
 # comments = df['comments']
 # print(comments.size)
 # print(len(df))
 
-emtpy_shapes = df.query("(shape != shape)")
-print(emtpy_shapes.size)
+# emtpy_shapes = df.query("(shape != shape)")
+# print(emtpy_shapes.size)
 
-emtpy_shapes['shape'] = emtpy_shapes.apply(shape_from_comment, axis=1)
-print(emtpy_shapes)
+# emtpy_shapes['shape'] = emtpy_shapes.apply(shape_from_comment, axis=1)
+# print(emtpy_shapes)
 # print(emtpy_shapes)
 
-print(df.query("(shape != shape)").size)
+# print(df.query("(shape != shape)").size)
 
+df = df.query("(shape == shape)")
+
+# df = pd.get_dummies(df['shape'])
+pca = PCA(n_components = 5)
+P = pca.fit(pd.get_dummies(df['shape']))
+
+# print(df)
+
+# print(df['longitude', 'latitude', 'timestamp'])
+
+print(pd.concat([df[['longitude', 'latitude']], P], axis=1))
+
+# print(pd.get_dummies(df['shape']))
+# print(count)
+
+# print(df[[(not isinstance(x, str)) for x in df['comments']]])
+
+# print(df.select_dtypes(include=['float64']))
+
+# type(df['shape'])
 
 # first_word(emtpy_shapes['comments'].iloc[1])
 # shape_from_comment(df['comments'][0])
