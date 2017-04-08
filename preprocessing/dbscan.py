@@ -47,7 +47,7 @@ df['timestamp'] = df['datetime'].map(to_timestamp, na_action = 'ignore')
 map = Basemap(projection='nsper', lat_0=40, lon_0=-0, resolution='l', area_thresh=1000.0)
 map.drawcoastlines()
 map.drawcountries()
-map.fillcontinents(color='coral')
+map.fillcontinents(color='grey')
 map.drawmapboundary()
  
 map.drawmeridians(np.arange(0, 360, 30))
@@ -76,7 +76,7 @@ scaler = StandardScaler().fit(df)
 df = scaler.transform(df)
 
 # DBSCAN
-db = DBSCAN(eps=0.3, min_samples=10, algorithm='auto').fit(df)
+db = DBSCAN(eps=0.3, min_samples=50, algorithm='auto').fit(df)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
@@ -97,6 +97,7 @@ colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
 
 for k, col in zip(unique_labels, colors):
     if k == -1:
+        continue
         # Black used for noise.
         col = 'k'
 
@@ -114,7 +115,7 @@ for k, col in zip(unique_labels, colors):
     # This line transforms world coordinates to map coordinates
     x, y = map(xy[:, 1], xy[:, 0])
 
-    map.plot(x, y, 'o', markerfacecolor=col, markeredgecolor='k', markersize=2)
+    map.plot(x, y, 'o', markerfacecolor=col, markeredgecolor='k', markersize=4)
 
 
 plt.title('Estimated number of clusters: %d' % n_clusters_)
