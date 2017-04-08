@@ -1,3 +1,5 @@
+import sys
+import os
 import time
 import pandas as pd
 import numpy as np
@@ -8,35 +10,24 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from mpl_toolkits.basemap import Basemap
 
-df = pd.read_csv('scrubbed.csv', low_memory = False)
+from preprocessing import preprocess_ufo_data
 
-# Remove empty shapes
-df = df.query("(shape == shape)")
+df = None
+if len(sys.argv) == 2 and sys.argv[1] == 'load':
+    if not os.path.isfile('preprocessed.csv'):
+        print('preprocessed.csv is not present in working directory, consider running "python3 preprocessing.py save" first')
+        os.exit(1)
 
-# Reduce out dataset to finish fast
-df = df.drop(df.index[range(0, 60000)])
+    df = pd.read_csv('preprocessed.csv', low_memory = False)
+else:
+    df = pd.read_csv('scrubbed.csv', low_memory = False)
 
-# Parse datetime
-df['datetime'] = df['datetime'].apply(lambda x: x.replace('24:00', '23:59'))
-df['datetime'] = pd.to_datetime(df['datetime'], format = '%m/%d/%Y %H:%M')
+    print('Preprocessing data, consider running "python3 preprocessing.py save" once and then start this script with "load" argument')
+    start = time.time()
+    # Apply preprocessing, in preprocessing.py file
+    df = preprocess_ufo_data(df)
+    print('Preprocessing finished in', time.time() - start, 'seconds')
 
-print(df)
-
-# Set all non parsable values for coordinates to 0 - FIXME
-def hack_floats(num):
-    try:
-        return float(num)
-    except:
-        return 0.0
-
-df['latitude'] = df['latitude'].map(hack_floats, na_action = 'ignore')
-df['longitude'] = df['longitude'].map(hack_floats, na_action = 'ignore')
-
-# Create timestamp feature from datetime
-def to_timestamp(datetime):
-    return time.mktime(datetime.timetuple())
-
-df['timestamp'] = df['datetime'].map(to_timestamp, na_action = 'ignore')
 
 # Construct map (background)
 # Default 'map' projection
@@ -60,20 +51,24 @@ map.drawparallels(np.arange(-90, 90, 30))
 #plt.show()
 
 
+# Reduce out dataset to finish fast
+#df = df.drop(df.index[range(0, 60000)])
 
 
 # Reduce dataset to features used for DBSCAN
 # df = df[['latitude', 'longitude', 'timestamp']]
-
 df = pd.concat([df[['latitude', 'longitude', 'timestamp']], pd.get_dummies(df['shape'])], axis=1)
+
 
 # Principal component analysis - dimension reduction - not needed for <100 columns
 # pca = PCA(n_components=5)
 # pca.fit_transform(df)
 
+
 # Scaling magic
 scaler = StandardScaler().fit(df)
 df = scaler.transform(df)
+
 
 # DBSCAN
 db = DBSCAN(eps=0.3, min_samples=10, algorithm='auto').fit(df)
