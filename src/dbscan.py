@@ -81,6 +81,17 @@ n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 
 print('Estimated number of clusters: %d' % n_clusters_)
 
+# Evaluation
+
+# With visualization TODO http://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_silhouette_analysis.html
+print("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(df, labels))
+
+# https://en.wikipedia.org/wiki/Cluster_analysis#Internal_evaluation
+# https://github.com/mirjalil/valclust
+# https://github.com/jqmviegas/jqm_cvi
+
+
+
 # Reverse scaling so we can plot real coordinates
 df = scaler.inverse_transform(df)
 
