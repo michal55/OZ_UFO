@@ -42,6 +42,9 @@ def to_timestamp(datetime):
     return time.mktime(datetime.timetuple())
 
 def preprocess_ufo_data(df):
+    old_value = pd.options.mode.chained_assignment
+    pd.options.mode.chained_assignment = None
+
     # Parse datetime and date posted
     df['datetime'] = df['datetime'].apply(lambda x: x.replace('24:00', '23:59'))
     df['datetime'] = pd.to_datetime(df['datetime'], format = '%m/%d/%Y %H:%M')
@@ -65,6 +68,7 @@ def preprocess_ufo_data(df):
     # Remove sightings remorted more than 90 days after the event
     df = df.drop(df[(df['date posted'] - df['datetime']).dt.days > 90].index)
 
+    pd.options.mode.chained_assignment = old_value
     return df
 
 
