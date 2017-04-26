@@ -60,7 +60,7 @@ def preprocess_ufo_data(df):
 
     # Fix floats and remove trailing space from longitude column name
     df['latitude'] = df['latitude'].map(fix_floats, na_action = 'ignore')
-    df['longitude'] = df['longitude '].map(fix_floats, na_action = 'ignore')
+    df['longitude'] = df['longitude'].map(fix_floats, na_action = 'ignore')
 
     # Remove sightings remorted more than 90 days after the event
     df = df.drop(df[(df['date posted'] - df['datetime']).dt.days > 90].index)

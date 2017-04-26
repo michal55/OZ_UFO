@@ -33,9 +33,9 @@ else:
 # Default 'map' projection
 # map = Basemap(projection='robin', lat_0=0, lon_0=-0, resolution='l', area_thresh=1000.0)
 # Globe - American side
-# map = Basemap(projection='nsper', lat_0=40, lon_0=-105, resolution='l', area_thresh=1000.0)
+map = Basemap(projection='nsper', lat_0=40, lon_0=-105, resolution='l', area_thresh=1000.0)
 # Globe - EU side
-map = Basemap(projection='nsper', lat_0=40, lon_0=-0, resolution='l', area_thresh=1000.0)
+# map = Basemap(projection='nsper', lat_0=40, lon_0=-0, resolution='l', area_thresh=1000.0)
 map.drawcoastlines()
 map.drawcountries()
 map.fillcontinents(color='grey')
@@ -52,13 +52,16 @@ map.drawparallels(np.arange(-90, 90, 30))
 
 
 # Reduce out dataset to finish fast
-#df = df.drop(df.index[range(0, 60000)])
+df = df.drop(df.index[range(0, 30000)])
+column_name = ""
 
-
+# print(len(df.query("(shape == column_name)").values))
+# os.exit[0]
 # Reduce dataset to features used for DBSCAN
 # df = df[['latitude', 'longitude', 'timestamp']]
 df = pd.concat([df[['latitude', 'longitude', 'timestamp']], pd.get_dummies(df['shape'])], axis=1)
-
+print(df.columns.values)
+column_len = len(df.columns.values)
 
 # Principal component analysis - dimension reduction - not needed for <100 columns
 # pca = PCA(n_components=5)
@@ -71,7 +74,7 @@ df = scaler.transform(df)
 
 
 # DBSCAN
-db = DBSCAN(eps=0.3, min_samples=50, algorithm='auto').fit(df)
+db = DBSCAN(eps=0.3, min_samples=20, algorithm='auto').fit(df)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
@@ -80,7 +83,7 @@ labels = db.labels_
 n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 
 print('Estimated number of clusters: %d' % n_clusters_)
-
+print('Core samples: ', core_samples_mask)
 # Reverse scaling so we can plot real coordinates
 df = scaler.inverse_transform(df)
 
@@ -89,6 +92,8 @@ df = scaler.inverse_transform(df)
 # Black removed and is used for noise instead.
 unique_labels = set(labels)
 colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
+
+print(unique_labels)
 
 for k, col in zip(unique_labels, colors):
     if k == -1:
@@ -99,19 +104,32 @@ for k, col in zip(unique_labels, colors):
     class_member_mask = (labels == k)
 
     xy = df[class_member_mask & core_samples_mask]
+    
+    
 
     # This line transforms world coordinates to map coordinates
     x, y = map(xy[:, 1], xy[:, 0])
 
-    map.plot(x, y, 'o', markerfacecolor=col, markeredgecolor='k', markersize=6)
+    # map.plot(x, y, 'o', markerfacecolor=col, markeredgecolor='k', markersize=6)
 
     xy = df[class_member_mask & ~core_samples_mask]
 
     # This line transforms world coordinates to map coordinates
     x, y = map(xy[:, 1], xy[:, 0])
 
-    map.plot(x, y, 'o', markerfacecolor=col, markeredgecolor='k', markersize=4)
+    # map.plot(x, y, 'o', markerfacecolor=col, markeredgecolor='k', markersize=4)
 
+
+    cluster = df[class_member_mask]
+
+    # print(cluster)
+    # print(len(df.query("(shape == column_name)").values))
+    cluster=cluster[:, range(3,column_len)]
+    print(cluster.sum(axis=0))
+    plt.plot(cluster.sum(axis=0), 'ro')
+    plt.show()
+
+    
 
 plt.title('Estimated number of clusters: %d' % n_clusters_)
 plt.show()
