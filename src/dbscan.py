@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.datasets.samples_generator import make_blobs
 from mpl_toolkits.basemap import Basemap
 
-import jqmcvi.base as jqmcvi
+# import jqmcvi.base as jqmcvi
 
 from preprocessing import preprocess_ufo_data
 
@@ -55,13 +55,9 @@ map.drawparallels(np.arange(-90, 90, 30))
 
 
 # Reduce out dataset to finish fast
-<<<<<<< HEAD
-df = df.drop(df.index[range(0, 30000)])
-column_name = ""
-=======
-df = df.drop(df.index[range(0, 50000)])
 
->>>>>>> c94ebb0388aceb2de64e4df7b686ef3da7349b3f
+df = df.drop(df.index[range(0, 40000)])
+column_name = ""
 
 # print(len(df.query("(shape == column_name)").values))
 # os.exit[0]
@@ -100,7 +96,7 @@ print('Estimated number of clusters: %d' % n_clusters_)
 # Evaluation
 
 # With visualization TODO http://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_silhouette_analysis.html
-print("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(df, labels))
+# print("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(df, labels))
 
 # Setup
 #git clone https://github.com/jqmviegas/jqm_cvi
@@ -109,14 +105,15 @@ print("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(df, labels))
 #sudo python3 setup.py install
 
 # Evaluation code
-print(jqmcvi.dunn_fast(df, labels))
+# print(jqmcvi.dunn_fast(df, labels))
 
 
 
 # Reverse scaling so we can plot real coordinates
 df = scaler.inverse_transform(df)
 
-
+# Dictionary of variances for each cluster
+variances = {}
 
 # Black removed and is used for noise instead.
 unique_labels = set(labels)
@@ -153,13 +150,21 @@ for k, col in zip(unique_labels, colors):
 
     # print(cluster)
     # print(len(df.query("(shape == column_name)").values))
+
+    # Only sum binary columns
     cluster=cluster[:, range(3,column_len)]
-    print(cluster.sum(axis=0))
-    plt.plot(cluster.sum(axis=0), 'ro')
-    plt.show()
+    cluster_values = cluster.sum(axis=0).astype(int)
+    print(cluster_values)
+    variances[k] = np.var(cluster_values)
+    print("\n-----------")
+    # plt.plot(cluster.sum(axis=0), 'ro')
+    # plt.show()
 
     
-
+# arr = [6,5,7,5,6,7,6,5,5,7,6,5,6,7]
+# print("Test variance: ", np.var(arr))
+for keys, values in variances.items():
+    print('%d: %f' % (keys, values))
 plt.title('Estimated number of clusters: %d' % n_clusters_)
 plt.show()
 
