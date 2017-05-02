@@ -31,7 +31,8 @@ else:
     df = preprocess_ufo_data(df)
     print('Preprocessing finished in', time.time() - start, 'seconds')
 
-
+# print(df.columns.values)
+# print(df)
 # Construct map (background)
 # Default 'map' projection
 # map = Basemap(projection='robin', lat_0=0, lon_0=-0, resolution='l', area_thresh=1000.0)
@@ -56,14 +57,26 @@ map.drawparallels(np.arange(-90, 90, 30))
 
 # Reduce out dataset to finish fast
 
-df = df.drop(df.index[range(0, 40000)])
+# df = df.drop(df.index[range(0, 40000)])
 column_name = ""
 
 # print(len(df.query("(shape == column_name)").values))
 # os.exit[0]
 # Reduce dataset to features used for DBSCAN
 # df = df[['latitude', 'longitude', 'timestamp']]
-df = pd.concat([df[['latitude', 'longitude', 'timestamp']], pd.get_dummies(df['shape'])], axis=1)
+
+# Ignored columns for now
+# , 'season_num''day_of_year',
+
+# Default settings
+# df = pd.concat([df[['latitude', 'longitude', 'timestamp']], pd.get_dummies(df['shape'])], axis=1)
+
+# Almost all columns
+df = pd.concat([df[['latitude', 'longitude', 'timestamp', 'season_x', 'season_y', 
+ 'day_of_year_x', 'day_of_year_y', 'hour_of_day', 'hour_of_day_x',
+ 'hour_of_day_y' ]], pd.get_dummies(df['shape']), pd.get_dummies(df['season']), pd.get_dummies(df['time_of_day'])], axis=1)
+
+
 print(df.columns.values)
 column_len = len(df.columns.values)
 
@@ -82,7 +95,7 @@ df = scaler.transform(df)
 
 
 # DBSCAN
-db = DBSCAN(eps=0.3, min_samples=20, algorithm='auto').fit(df)
+db = DBSCAN(eps=0.7, min_samples=20, algorithm='auto').fit(df)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
@@ -136,14 +149,14 @@ for k, col in zip(unique_labels, colors):
     # This line transforms world coordinates to map coordinates
     x, y = map(xy[:, 1], xy[:, 0])
 
-    # map.plot(x, y, 'o', markerfacecolor=col, markeredgecolor='k', markersize=6)
+    map.plot(x, y, 'o', markerfacecolor=col, markeredgecolor='k', markersize=6)
 
     xy = df[class_member_mask & ~core_samples_mask]
 
     # This line transforms world coordinates to map coordinates
     x, y = map(xy[:, 1], xy[:, 0])
 
-    # map.plot(x, y, 'o', markerfacecolor=col, markeredgecolor='k', markersize=4)
+    map.plot(x, y, 'o', markerfacecolor=col, markeredgecolor='k', markersize=4)
 
 
     cluster = df[class_member_mask]
@@ -152,11 +165,12 @@ for k, col in zip(unique_labels, colors):
     # print(len(df.query("(shape == column_name)").values))
 
     # Only sum binary columns
-    cluster=cluster[:, range(3,column_len)]
+    cluster=cluster[:, range(10,column_len)]
     cluster_values = cluster.sum(axis=0).astype(int)
-    print(cluster_values)
+    # print(cluster_values)
     variances[k] = np.var(cluster_values)
-    print("\n-----------")
+    # print("\n-----------")
+    
     # plt.plot(cluster.sum(axis=0), 'ro')
     # plt.show()
 
