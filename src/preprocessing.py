@@ -31,6 +31,18 @@ def season(dt):
     dt = dt.date().replace(year=Y)
     return next(season for season, (start, end) in seasons if start <= dt <= end)
 
+def season_num(dt):
+    # http://stackoverflow.com/a/28688724/6022799
+    Y = 2000 # dummy leap year to allow input X-02-29 (leap day)
+    seasons = [(0.00, (date(Y,  1,  1),  date(Y,  3, 20))),
+               (0.25, (date(Y,  3, 21),  date(Y,  6, 20))),
+               (0.50, (date(Y,  6, 21),  date(Y,  9, 22))),
+               (0.75, (date(Y,  9, 23),  date(Y, 12, 20))),
+               (0.00, (date(Y, 12, 21),  date(Y, 12, 31)))]
+
+    dt = dt.date().replace(year=Y)
+    return next(season for season, (start, end) in seasons if start <= dt <= end)
+
 # Set all non parsable values for coordinates to 0
 def fix_floats(num):
     try:
@@ -54,6 +66,18 @@ def preprocess_ufo_data(df):
     # Create time_of_day and season attributes
     df['time_of_day'] = df['datetime'].map(time_of_day, na_action = 'ignore')
     df['season'] = df['datetime'].map(season, na_action = 'ignore')
+
+    df['season_num'] = df['datetime'].map(season_num, na_action = 'ignore')
+    df['season_x'] = np.sin(2. * np.pi * df.season_num)
+    df['season_y'] = np.cos(2. * np.pi * df.season_num)
+
+    df['day_of_year'] = df['datetime'].apply(lambda x: x.dayofyear)
+    df['day_of_year_x'] = np.sin(2. * np.pi * df.day_of_year / 366.0)
+    df['day_of_year_y'] = np.cos(2. * np.pi * df.day_of_year / 366.0)
+
+    df['hour_of_day'] = df['datetime'].apply(lambda x: x.hour)
+    df['hour_of_day_x'] = np.sin(2. * np.pi * df.day_of_year / 24.0)
+    df['hour_of_day_y'] = np.cos(2. * np.pi * df.day_of_year / 24.0)
 
     # Create timestamp attribute from datetime
     df['timestamp'] = df['datetime'].map(to_timestamp, na_action = 'ignore')
@@ -81,7 +105,9 @@ def main():
             df.to_csv('preprocessed.csv')
         elif sys.argv[1] == 'plot':
             #df['time_of_day'].groupby(df.time_of_day).count().plot(kind = 'bar')
-            df['season'].groupby(df.season).count().plot(kind = 'bar')
+            #df['season'].groupby(df.season).count().plot(kind = 'bar')
+            #plt.plot(df['season_x'], df['season_y'], 'o')
+            plt.scatter(df['hour_of_day_x'], df['hour_of_day_y'])
             plt.show()
 
 if __name__ == "__main__":
