@@ -8,7 +8,10 @@ from sklearn.cluster import DBSCAN
 from sklearn import metrics
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.datasets.samples_generator import make_blobs
 from mpl_toolkits.basemap import Basemap
+
+import jqmcvi.base as jqmcvi
 
 from preprocessing import preprocess_ufo_data
 
@@ -52,7 +55,7 @@ map.drawparallels(np.arange(-90, 90, 30))
 
 
 # Reduce out dataset to finish fast
-#df = df.drop(df.index[range(0, 60000)])
+df = df.drop(df.index[range(0, 50000)])
 
 
 # Reduce dataset to features used for DBSCAN
@@ -63,6 +66,10 @@ df = pd.concat([df[['latitude', 'longitude', 'timestamp']], pd.get_dummies(df['s
 # Principal component analysis - dimension reduction - not needed for <100 columns
 # pca = PCA(n_components=5)
 # pca.fit_transform(df)
+
+# Uncomment to use nicely clusterable sample data
+#centers = [[1, 1], [-1, -1], [1, -1]]
+#df, labels_true = make_blobs(n_samples=750, centers=centers, cluster_std=0.2, random_state=0)
 
 
 # Scaling magic
@@ -86,10 +93,14 @@ print('Estimated number of clusters: %d' % n_clusters_)
 # With visualization TODO http://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_silhouette_analysis.html
 print("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(df, labels))
 
-# https://en.wikipedia.org/wiki/Cluster_analysis#Internal_evaluation
-# https://github.com/mirjalil/valclust
-# https://github.com/jqmviegas/jqm_cvi
+# Setup
+#git clone https://github.com/jqmviegas/jqm_cvi
+#cd jqm_cvi
+#sudo pip3 install cython
+#sudo python3 setup.py install
 
+# Evaluation code
+print(jqmcvi.dunn_fast(df, labels))
 
 
 # Reverse scaling so we can plot real coordinates
