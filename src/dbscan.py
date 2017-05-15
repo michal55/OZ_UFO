@@ -9,11 +9,35 @@ from sklearn import metrics
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets.samples_generator import make_blobs
+from sklearn.metrics.pairwise import cosine_similarity
+from scipy import sparse
+from scipy.spatial import distance
 from mpl_toolkits.basemap import Basemap
 
 # import jqmcvi.base as jqmcvi
 
 from preprocessing import preprocess_ufo_data
+
+pd.options.display.width = 180
+# np.set_printoptions(precision=3)
+# np.set_printoptions(suppress=True)
+
+def similarity(array, output):
+    sim = []
+    for X in range(len(array)):
+        sim.append([])
+        for Y in range(len(array)):
+            sim[X].append(((distance.cosine(array[X], array[Y])*1000)+1)**2)
+    if output == "arr":
+        return sim
+    else:
+        summed = []
+        for X in range(len(array)):
+            summed.append(sum(sim[X]))
+        return summed           
+
+
+
 
 df = None
 if len(sys.argv) == 2 and sys.argv[1] == 'load':
@@ -71,12 +95,21 @@ column_name = ""
 # Default settings
 # df = pd.concat([df[['latitude', 'longitude', 'timestamp']], pd.get_dummies(df['shape'])], axis=1)
 
-# Almost all columns
+# Binary seasons, time of day....
+# df = pd.concat([df[['latitude', 'longitude', 'timestamp']], 
+#     pd.get_dummies(df['shape']), pd.get_dummies(df['season']), 
+#     pd.get_dummies(df['hour_of_day']), pd.get_dummies(df['time_of_day'])], axis=1)
+
+# season a day of year korelacia
+
+# Numeric attributes
 df = pd.concat([df[['latitude', 'longitude', 'timestamp', 'season_x', 'season_y', 
- 'day_of_year_x', 'day_of_year_y', 'hour_of_day', 'hour_of_day_x',
- 'hour_of_day_y' ]], pd.get_dummies(df['shape']), pd.get_dummies(df['season']), pd.get_dummies(df['time_of_day'])], axis=1)
+ 'day_of_year_x', 'day_of_year_y', 'hour_of_day_x',
+ 'hour_of_day_y' ]], pd.get_dummies(df['shape'])], axis=1)
 
 
+
+column_names = df.columns.values
 print(df.columns.values)
 column_len = len(df.columns.values)
 
@@ -95,7 +128,7 @@ df = scaler.transform(df)
 
 
 # DBSCAN
-db = DBSCAN(eps=0.7, min_samples=20, algorithm='auto').fit(df)
+db = DBSCAN(eps=1, min_samples=20, algorithm='auto').fit(df)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
@@ -127,6 +160,7 @@ df = scaler.inverse_transform(df)
 
 # Dictionary of variances for each cluster
 variances = {}
+vectors = []
 
 # Black removed and is used for noise instead.
 unique_labels = set(labels)
@@ -161,24 +195,51 @@ for k, col in zip(unique_labels, colors):
 
     cluster = df[class_member_mask]
 
-    # print(cluster)
+    print(cluster)
     # print(len(df.query("(shape == column_name)").values))
 
     # Only sum binary columns
-    cluster=cluster[:, range(10,column_len)]
-    cluster_values = cluster.sum(axis=0).astype(int)
-    # print(cluster_values)
-    variances[k] = np.var(cluster_values)
-    # print("\n-----------")
+    # cluster=cluster[:, range(10,column_len)]
+
+    # Sum of binary columns
+    # cluster_values = cluster.sum(axis=0).astype(int)
+    
+    # Avg of numeric columns - Centroid
+    cluster_values = np.average(cluster,axis=0)
+
+    # Downscale timestamp parameter
+    cluster_values[2] /= 1000000000
+    
+    vectors.append(cluster_values)
     
     # plt.plot(cluster.sum(axis=0), 'ro')
     # plt.show()
 
-    
-# arr = [6,5,7,5,6,7,6,5,5,7,6,5,6,7]
-# print("Test variance: ", np.var(arr))
-for keys, values in variances.items():
-    print('%d: %f' % (keys, values))
+print(column_names)
+
+# for arr in vectors:
+#     print(np.array_str(arr, precision=3, suppress_small=True))
+
+# matrix = sparse.csr_matrix(vectors)
+
+# similarities = cosine_similarity(matrix, dense_output=False)
+
+# for arr in similarity(vectors, "arr"):
+#     print(arr)
+
+cluster_similarities = similarity(vectors, "else")
+
+print("Sum of similarities to other clusters for each cluster")
+
+for num in cluster_similarities:
+    print(num)
+
+print("Overal similarity")
+
+print(sum(cluster_similarities))    
+
 plt.title('Estimated number of clusters: %d' % n_clusters_)
 plt.show()
 
+# porovnat vektory kazdeho pozorovania s centroidom - priemerny vektor z results.txt
+# porovnat centroidy medzi sebou
