@@ -135,7 +135,7 @@ df = scaler.transform(df)
 
 
 # DBSCAN
-db = DBSCAN(eps=1, min_samples=20, algorithm='auto').fit(df)
+db = DBSCAN(eps=3, min_samples=20, algorithm='auto').fit(df)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
@@ -245,10 +245,10 @@ avg_intra_sum = intra_sum/float(len(in_cluster_sim))
 
 print("Average intra-cluster similarity: ", avg_intra_sum)
 print("Number of clusters: ", len(vectors))
-print("\nCross / Intra: ", sum(cluster_similarities)/avg_intra_sum)
+print("\nIntra / Cross: ", avg_intra_sum/avg_cross_sum)
 
 plt.title('Estimated number of clusters: %d' % n_clusters_)
-plt.show()
+# plt.show()
 
 # porovnat vektory kazdeho pozorovania s centroidom - priemerny vektor z results.txt
 # porovnat centroidy medzi sebou

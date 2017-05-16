@@ -1,0 +1,6 @@
+eps	min_s 	alg	cross-cluster	intra-cluster	cross/intra	clusters
+1	20	auto	77.45		1959		25.294		74
+1.5	20	auto	118.53		2230		18.82		94
+2	20	auto	88.02		2711		30		81
+2.5	20	auto	51.88		9793		188.78		23
+3	20	auto	37.11		10292		277,35		22
