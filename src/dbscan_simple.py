@@ -83,7 +83,10 @@ def DBScan(df, eps, min_samples):
 
     if len(sys.argv) >= 2:
         if sys.argv[1] == 'db':
-            return jqmcvi.davisbouldin(clusters, centers)
+            try:
+                return jqmcvi.davisbouldin(clusters, centers)
+            except:
+                return 0.
         elif sys.argv[1] == 'custom':
             cluster_similarities = similarity(centers, "else")
 
@@ -111,9 +114,12 @@ df = pd.read_csv('scrubbed.csv', low_memory = False)
 df = preprocess_ufo_data(df)
 
 # Almost all columns
+#df = pd.concat([df[['latitude', 'longitude', 'timestamp', 'season_x', 'season_y', 
+# 'day_of_year_x', 'day_of_year_y', 'hour_of_day', 'hour_of_day_x',
+# 'hour_of_day_y' ]], pd.get_dummies(df['shape']), pd.get_dummies(df['season']), pd.get_dummies(df['time_of_day'])], axis=1)
 df = pd.concat([df[['latitude', 'longitude', 'timestamp', 'season_x', 'season_y', 
- 'day_of_year_x', 'day_of_year_y', 'hour_of_day', 'hour_of_day_x',
- 'hour_of_day_y' ]], pd.get_dummies(df['shape']), pd.get_dummies(df['season']), pd.get_dummies(df['time_of_day'])], axis=1)
+ 'day_of_year_x', 'day_of_year_y', 'hour_of_day_x',
+ 'hour_of_day_y' ]], pd.get_dummies(df['shape'])], axis=1)
 
 # Scaling magic
 scaler = StandardScaler().fit(df)
@@ -145,10 +151,14 @@ def solve_for(idx):
     concurrent.futures.wait(arr)
 '''
 
-#[solve_for(i) for i in range(0, len(x_data))]
+[solve_for(i) for i in range(0, len(x_data))]
+#[solve_for(i) for i in range(len(x_data) - 1, -1, -1)]
 
-z_data = pickle.load(open('custom_z', 'rb'))
+#z_data = pickle.load(open('custom_z', 'rb'))
 #pickle.dump(z_data, open('custom_z', 'wb'))
+
+#z_data = pickle.load(open('dbi_z', 'rb'))
+#pickle.dump(z_data, open('dbi_z', 'wb'))
 
 print('Plotting...')
 
@@ -162,10 +172,10 @@ x_data, y_data = np.meshgrid(x_data, y_data)
 x_data = x_data.flatten()
 y_data = y_data.flatten()
 z_data = z_data.flatten()
-#ax.bar3d(x_data, y_data, np.zeros(len(z_data)),
-#        (MIN_SAMPLES_END - MIN_SAMPLES_START) / MIN_SAMPLES_COUNT - 1.,
-#        (EPS_END - EPS_START) / EPS_COUNT - 0.07, z_data )
-ax.plot_surface(x_data, y_data, z_data, rstride = 1, cstride = 1)
+ax.bar3d(x_data, y_data, np.zeros(len(z_data)),
+        (MIN_SAMPLES_END - MIN_SAMPLES_START) / MIN_SAMPLES_COUNT - 1.,
+        (EPS_END - EPS_START) / EPS_COUNT - 0.07, z_data )
+#ax.plot_surface(x_data, y_data, z_data, rstride = 1, cstride = 1)
 
 ax.set_xlabel('min samples')
 ax.set_ylabel('eps')
