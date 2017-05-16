@@ -135,7 +135,7 @@ df = scaler.transform(df)
 
 
 # DBSCAN
-db = DBSCAN(eps=3, min_samples=20, algorithm='auto').fit(df)
+db = DBSCAN(eps=0.1, min_samples=20, algorithm='auto').fit(df)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
