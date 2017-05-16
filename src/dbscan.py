@@ -27,7 +27,8 @@ def similarity(array, output):
     for X in range(len(array)):
         sim.append([])
         for Y in range(len(array)):
-            sim[X].append(((distance.cosine(array[X], array[Y])*1000)+1)**2)
+            sim[X].append((distance.cosine(array[X], array[Y])+1)**2)
+            # print(sim[X][Y])
     if output == "arr":
         return sim
     else:
@@ -36,6 +37,12 @@ def similarity(array, output):
             summed.append(sum(sim[X]))
         return summed           
 
+
+def cluster_sim(centroid, cluster):
+    sim = []
+    for element in cluster:
+        sim.append((distance.cosine(centroid, element)+1)**2)
+    return sum(sim)
 
 
 
@@ -168,6 +175,8 @@ colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
 
 print(unique_labels)
 
+in_cluster_sim = []
+
 for k, col in zip(unique_labels, colors):
     if k == -1:
         continue
@@ -210,6 +219,8 @@ for k, col in zip(unique_labels, colors):
     # Downscale timestamp parameter
     cluster_values[2] /= 1000000000
     
+    # 
+    in_cluster_sim.append(cluster_sim(cluster_values, cluster))
     vectors.append(cluster_values)
     
     # plt.plot(cluster.sum(axis=0), 'ro')
@@ -217,26 +228,24 @@ for k, col in zip(unique_labels, colors):
 
 print(column_names)
 
-# for arr in vectors:
-#     print(np.array_str(arr, precision=3, suppress_small=True))
-
-# matrix = sparse.csr_matrix(vectors)
-
-# similarities = cosine_similarity(matrix, dense_output=False)
-
-# for arr in similarity(vectors, "arr"):
-#     print(arr)
-
 cluster_similarities = similarity(vectors, "else")
 
-print("Sum of similarities to other clusters for each cluster")
+# print("Sum of similarities to other clusters for each cluster")
 
-for num in cluster_similarities:
-    print(num)
+# for num in cluster_similarities:
+#     print(num)
 
-print("Overal similarity")
+sum_cross_cluster = sum(cluster_similarities)
+avg_cross_sum = sum_cross_cluster/float(len(vectors))
 
-print(sum(cluster_similarities))    
+print("Average cross-cluster similarity: ", avg_cross_sum)
+
+intra_sum = sum(in_cluster_sim)
+avg_intra_sum = intra_sum/float(len(in_cluster_sim))
+
+print("Average intra-cluster similarity: ", avg_intra_sum)
+print("Number of clusters: ", len(vectors))
+print("\nCross / Intra: ", sum(cluster_similarities)/avg_intra_sum)
 
 plt.title('Estimated number of clusters: %d' % n_clusters_)
 plt.show()
